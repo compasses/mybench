@@ -1,5 +1,5 @@
-#include <benchmark/benchmark.h>
 #include <iostream>
+#include <chrono>
 
 inline unsigned long intHash64(unsigned long x)
 {
@@ -60,35 +60,39 @@ public:
     }
 };
 
+size_t h;
+size_t s;
 
-static void BM_ck_default_hash(benchmark::State &state) {
-    for (auto _ : state)
+void test_ck()
+{
+    const auto start{std::chrono::steady_clock::now()};
+    for (int i = 0; i < 100000000; ++i)
     {
-        for (size_t i = 0; i < state.range(0); ++i)
-            benchmark::DoNotOptimize(DefaultHash64<size_t>(i));
+        h = DefaultHash64<size_t>(i);
+        __asm__ __volatile__("");
     }
-    
-      state.SetBytesProcessed(int64_t(state.iterations()) *
-                                    int64_t(state.range(0)));
+    s = h;
+    const auto end{std::chrono::steady_clock::now()};
+    const std::chrono::duration<double> elapsed_seconds{end - start};
+    std::cout << elapsed_seconds.count() << "s\n";
 }
 
-static void BM_phmap_mix_hash(benchmark::State &state) {
-    for (auto _ : state)
+void test_phmap()
+{
+    const auto start{std::chrono::steady_clock::now()};
+    for (int i = 0; i < 100000000; ++i)
     {
-        for (size_t i = 0; i < state.range(0); ++i)
-            benchmark::DoNotOptimize(phmap_mix<sizeof(size_t)>()(std::hash<size_t>()(i)));
+        h = phmap_mix<sizeof(size_t)>()(std::hash<size_t>()(i));
+        __asm__ __volatile__("");
     }
-    
-      state.SetBytesProcessed(int64_t(state.iterations()) *
-                                    int64_t(state.range(0)));
+    s = h;
+    const auto end{std::chrono::steady_clock::now()};
+    const std::chrono::duration<double> elapsed_seconds{end - start};
+    std::cout << elapsed_seconds.count() << "s\n";
 }
+int main()
+{
 
-
-
-
-// BENCHMARK(BM_memcpy)->RangeMultiplier(2)->Range(128 << 20, 1024 << 20);
-BENCHMARK(BM_ck_default_hash)->RangeMultiplier(10)->Range(1000000, 100000000);
-BENCHMARK(BM_phmap_mix_hash)->RangeMultiplier(10)->Range(1000000, 100000000);
-
-
-BENCHMARK_MAIN();
+    test_ck();
+    test_phmap();
+}

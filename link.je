@@ -1,0 +1,28 @@
+prefix=/data01/heguangnan/jeprof
+exec_prefix=/data01/heguangnan/jeprof
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+install_suffix=
+
+Name: jemalloc
+Description: A general purpose malloc(3) implementation that emphasizes fragmentation avoidance and scalable concurrency support.
+URL: http://jemalloc.net/
+Version: 5.2.1_0
+Cflags: -I${includedir}
+Libs: -L${libdir} -ljemalloc${install_suffix}
+
+prefix=/data01/heguangnan/jeprof/jemalloc-5.3
+
+includedir=${prefix}/include
+libdir=${prefix}/lib
+
+gcc -I${includedir} -o frag_test frag_test.c -L${libdir} -ljemalloc -lpthread
+
+LD_LIBRARY_PATH=${libdir} ./frag_test
+
+
+g++ -ldl  -I${includedir} -o jemmap jemmap.cpp  -L/data01/heguangnan/ce-dev/build/contrib/jemalloc-cmake/  -ljemalloc -lpthread
+g++ -ldl  -I${includedir} -o jemmap jemmap.cpp  -L${libdir}  -ljemalloc -lpthread
+g++ -ldl  -I${includedir} -o jemmap jemmap.cpp  -L/data01/heguangnan/ClickHouse/build/contrib/jemalloc-cmake/ -L/data01/heguangnan/ClickHouse/build/contrib/libunwind-cmake -lunwind -ljemalloc -lpthread
+
+strace -f -e trace=mmap ./realloc-perf-d66f976 2>&1 | wc -l
